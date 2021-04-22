@@ -16,6 +16,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.example.parsowanie.databinding.ActivityMainBinding;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
   public class MainActivity extends AppCompatActivity {
@@ -29,6 +30,26 @@ import org.json.JSONObject;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        responseString = "";
+
+        queue = MySingleton.getInstance(this.getApplicationContext()).getRequestQueue();
+        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET,
+                url, null, response -> {
+            for (int i = 0; i< response.length(); i++){
+                try {
+                    JSONObject jsonObject = response.getJSONObject(i);
+                    responseString += " * " + jsonObject.getString("text");
+                    responseString += " ? " + jsonObject.getBoolean("used");
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+            }
+            //responseString=response.toString();
+        }, error -> responseString = "FAIL");
+        queue.add(jsonArrayRequest);
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -37,19 +58,10 @@ import org.json.JSONObject;
                  binding.feed.setText(responseString);
                  binding.searchResults.setText(binding.searchPrase.getText());
                  binding.invalidateAll();
-            //    queue.add(json)
+
             }
         });
 
-        queue = MySingleton.getInstance(this.getApplicationContext()).getRequestQueue();
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET,
-                url, null, response -> responseString=response.toString(), new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-            responseString = "FAIL";
-            }
-        });
-        queue.add(jsonArrayRequest);
 
     }
 }
